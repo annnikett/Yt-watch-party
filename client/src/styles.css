@@ -1012,23 +1012,33 @@ button, input { font-family: inherit; }
 
 .home-main {
   width: 100%;
-
   max-width: 1120px;
 
-  height:
-    calc(100vh - 96px);
+  min-height: calc(100vh - 96px);
 
   margin: 0 auto;
 
-  padding:
-    35px 24px
-    15px;
+  padding: 20px 24px 30px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-section {
+  width: 100%;
 
   display: flex;
 
   flex-direction: column;
 
+  align-items: center;
   justify-content: center;
+
+  text-align: center;
 }
 
 
@@ -1791,18 +1801,23 @@ button, input { font-family: inherit; }
    ===================================================== */
 
 .home-footer {
-  position: absolute;
+  position: relative;
 
-  bottom: 9px;
+  width: 100%;
 
-  left: 0;
-  right: 0;
+  margin-top: 14px;
+
+  padding: 0 20px 8px;
+
+  box-sizing: border-box;
 
   text-align: center;
 
   color: #484b54;
 
   font-size: 0.6rem;
+
+  line-height: 1.4;
 }
 
 
@@ -1921,4 +1936,348 @@ button, input { font-family: inherit; }
   .hero-description br {
     display: none;
   }
+}
+/* =====================================================
+   HOW IT WORKS
+   ===================================================== */
+
+.how-it-works {
+  width: 100%;
+
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  padding:
+    90px 24px
+    80px;
+
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.how-header {
+  text-align: center;
+
+  margin-bottom: 45px;
+}
+
+.how-badge {
+  display: inline-block;
+
+  padding:
+    6px 12px;
+
+  border:
+    1px solid
+    rgba(242, 184, 75, 0.25);
+
+  border-radius: 999px;
+
+  color: var(--gold);
+
+  background:
+    rgba(242, 184, 75, 0.05);
+
+  font-size: 0.65rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+
+  margin-bottom: 14px;
+}
+
+.how-header h2 {
+  margin: 0;
+
+  font-family: var(--font-display);
+
+  font-size:
+    clamp(2rem, 4vw, 3.3rem);
+
+  line-height: 1.1;
+
+  letter-spacing: -0.04em;
+
+  color: #f5f5f6;
+}
+
+.how-header h2 span {
+  color: var(--gold);
+}
+
+.how-header p {
+  margin:
+    14px auto 0;
+
+  max-width: 560px;
+
+  color: #858892;
+
+  font-size: 0.9rem;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   STEPS
+   ===================================================== */
+
+.steps-container {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 16px;
+}
+
+
+/* =====================================================
+   STEP CARD
+   ===================================================== */
+
+.step-card {
+  position: relative;
+
+  min-height: 220px;
+
+  padding: 24px;
+
+  box-sizing: border-box;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24, 27, 34, 0.95),
+      rgba(14, 16, 21, 0.96)
+    );
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.step-card:hover {
+  transform:
+    translateY(-5px);
+
+  border-color:
+    rgba(242, 184, 75, 0.25);
+
+  box-shadow:
+    0 15px 40px
+    rgba(0, 0, 0, 0.25);
+}
+
+
+/* =====================================================
+   NUMBER
+   ===================================================== */
+
+.step-number {
+  position: absolute;
+
+  top: 18px;
+
+  right: 20px;
+
+  color: #3e414a;
+
+  font-family: var(--font-display);
+
+  font-size: 0.75rem;
+
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   ICON
+   ===================================================== */
+
+.step-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  font-size: 1.25rem;
+
+  border: 1px solid;
+}
+
+.yellow-step {
+  color: var(--gold);
+
+  border-color:
+    rgba(242, 184, 75, 0.3);
+
+  background:
+    rgba(242, 184, 75, 0.06);
+}
+
+.cyan-step {
+  color: var(--teal);
+
+  border-color:
+    rgba(79, 209, 197, 0.3);
+
+  background:
+    rgba(79, 209, 197, 0.06);
+}
+
+
+/* =====================================================
+   STEP TEXT
+   ===================================================== */
+
+.step-card h3 {
+  margin:
+    20px 0 7px;
+
+  font-family: var(--font-display);
+
+  font-size: 1rem;
+
+  font-weight: 650;
+
+  color: #eeeeef;
+}
+
+.step-card p {
+  margin: 0;
+
+  color: #777a85;
+
+  font-size: 0.74rem;
+
+  line-height: 1.55;
+}
+
+
+/* =====================================================
+   SYNC INFO
+   ===================================================== */
+
+.sync-info {
+  max-width: 850px;
+
+  margin:
+    28px auto 0;
+
+  padding:
+    18px 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  border:
+    1px solid
+    rgba(242, 184, 75, 0.16);
+
+  border-radius: 14px;
+
+  background:
+    rgba(242, 184, 75, 0.035);
+}
+
+.sync-info-icon {
+  width: 42px;
+  height: 42px;
+
+  min-width: 42px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background:
+    rgba(242, 184, 75, 0.08);
+
+  border:
+    1px solid
+    rgba(242, 184, 75, 0.2);
+}
+
+.sync-info h3 {
+  margin: 0;
+
+  color: var(--gold);
+
+  font-size: 0.82rem;
+
+  font-weight: 650;
+}
+
+.sync-info p {
+  margin:
+    4px 0 0;
+
+  color: #777a85;
+
+  font-size: 0.7rem;
+
+  line-height: 1.5;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+  .steps-container {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .how-it-works {
+    padding:
+      65px 16px
+      50px;
+  }
+
+  .steps-container {
+    grid-template-columns: 1fr;
+  }
+
+  .step-card {
+    min-height: 190px;
+  }
+
+  .sync-info {
+    align-items: flex-start;
+  }
+
 }

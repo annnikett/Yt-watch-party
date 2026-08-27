@@ -7,6 +7,7 @@ export default function Home() {
   const [searchParams] = useSearchParams();
 
   const [username, setUsername] = useState("");
+
   const [joinCode, setJoinCode] = useState(
     () => (searchParams.get("code") || "").toUpperCase()
   );
@@ -22,7 +23,10 @@ export default function Home() {
     localStorage.setItem("wp_username", name);
   };
 
+  // ============================================
   // CREATE ROOM
+  // ============================================
+
   const handleCreate = async () => {
     if (!username.trim()) {
       setError("Please enter your name.");
@@ -53,7 +57,10 @@ export default function Home() {
     }
   };
 
+  // ============================================
   // JOIN ROOM
+  // ============================================
+
   const handleJoin = async (e) => {
     e.preventDefault();
 
@@ -92,21 +99,38 @@ export default function Home() {
   return (
     <div className="home-page">
 
-      {/* Background */}
+      {/* ============================================
+          BACKGROUND
+      ============================================ */}
+
       <div className="home-glow home-glow-yellow"></div>
       <div className="home-glow home-glow-cyan"></div>
 
       <div className="home-grid home-grid-left"></div>
       <div className="home-grid home-grid-right"></div>
 
-      {/* ================= NAVBAR ================= */}
+
+      {/* ============================================
+          NAVBAR
+      ============================================ */}
 
       <header className="home-navbar">
 
+        {/* LOGO */}
+
         <div
           className="home-logo"
-          onClick={() => setView("choice")}
+          onClick={() => {
+            setView("choice");
+            setError("");
+
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
+          }}
         >
+
           <div className="logo-icon">
             ▶
           </div>
@@ -114,11 +138,18 @@ export default function Home() {
           <span>
             Watch<span>Party</span>
           </span>
+
         </div>
+
+
+        {/* NAVIGATION */}
 
         <nav className="home-nav">
 
-          <a href="#home" className="active">
+          <a
+            href="#home"
+            className="active"
+          >
             Home
           </a>
 
@@ -138,43 +169,70 @@ export default function Home() {
 
       </header>
 
-      {/* ================= MAIN ================= */}
 
-      <main className="home-main" id="home">
+      {/* ============================================
+          HOME / HERO
+      ============================================ */}
+
+      <main
+        className="home-main"
+        id="home"
+      >
 
         <section className="hero-section">
 
-          {/* Badge */}
+          {/* BADGE */}
 
           <div className="hero-badge">
+
             <span className="hero-badge-dot"></span>
+
             Watch together in real-time
+
           </div>
 
-          {/* Heading */}
+
+          {/* TITLE */}
 
           <h1 className="hero-title">
+
             Watch Together.
+
             <br />
-            <span>Anywhere.</span>
+
+            <span>
+              Anywhere.
+            </span>
+
           </h1>
 
-          {/* Description */}
+
+          {/* DESCRIPTION */}
 
           <p className="hero-description">
-            Create a room and watch YouTube with your friends
+
+            Create a room and watch YouTube
+            with your friends
+
             <br />
+
             in <span>perfect sync.</span>
+
           </p>
 
-          {/* ================= CHOICE ================= */}
+
+          {/* ========================================
+              CREATE / JOIN CHOICE
+          ======================================== */}
 
           {view === "choice" && (
+
             <div className="room-choice">
 
-              {/* CREATE */}
+              {/* CREATE ROOM */}
 
               <button
+                type="button"
                 className="room-action create-action"
                 onClick={() => {
                   setError("");
@@ -187,10 +245,15 @@ export default function Home() {
                 </div>
 
                 <div className="action-content">
-                  <h2>Create Room</h2>
+
+                  <h2>
+                    Create Room
+                  </h2>
+
                   <p>
                     Start a new watch party
                   </p>
+
                 </div>
 
                 <div className="action-arrow">
@@ -199,15 +262,18 @@ export default function Home() {
 
               </button>
 
+
               {/* OR */}
 
               <div className="choice-or">
                 OR
               </div>
 
-              {/* JOIN */}
+
+              {/* JOIN ROOM */}
 
               <button
+                type="button"
                 className="room-action join-action"
                 onClick={() => {
                   setError("");
@@ -220,10 +286,15 @@ export default function Home() {
                 </div>
 
                 <div className="action-content">
-                  <h2>Join Room</h2>
+
+                  <h2>
+                    Join Room
+                  </h2>
+
                   <p>
                     Join with a room code
                   </p>
+
                 </div>
 
                 <div className="action-arrow">
@@ -233,11 +304,16 @@ export default function Home() {
               </button>
 
             </div>
+
           )}
 
-          {/* ================= CREATE FORM ================= */}
+
+          {/* ========================================
+              CREATE ROOM FORM
+          ======================================== */}
 
           {view === "create" && (
+
             <div className="home-form-card">
 
               <div className="form-heading">
@@ -247,16 +323,25 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <h2>Create a Room</h2>
+
+                  <h2>
+                    Create a Room
+                  </h2>
+
                   <p>
                     Enter your name to get started
                   </p>
+
                 </div>
 
               </div>
 
+
               <label className="home-field">
-                <span>Your name</span>
+
+                <span>
+                  Your name
+                </span>
 
                 <input
                   type="text"
@@ -268,34 +353,49 @@ export default function Home() {
                   maxLength={24}
                   autoFocus
                 />
+
               </label>
 
+
               <button
+                type="button"
                 className="form-primary-button"
                 onClick={handleCreate}
                 disabled={busy}
               >
+
                 {busy
                   ? "Creating..."
                   : "Create Room →"}
+
               </button>
 
+
               <button
+                type="button"
                 className="form-back-button"
                 onClick={() => {
                   setError("");
                   setView("choice");
                 }}
+                disabled={busy}
               >
+
                 ← Back
+
               </button>
 
             </div>
+
           )}
 
-          {/* ================= JOIN FORM ================= */}
+
+          {/* ========================================
+              JOIN ROOM FORM
+          ======================================== */}
 
           {view === "join" && (
+
             <div className="home-form-card">
 
               <div className="form-heading">
@@ -305,18 +405,29 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <h2>Join a Room</h2>
+
+                  <h2>
+                    Join a Room
+                  </h2>
+
                   <p>
                     Enter your name and room code
                   </p>
+
                 </div>
 
               </div>
 
+
               <form onSubmit={handleJoin}>
 
+                {/* NAME */}
+
                 <label className="home-field">
-                  <span>Your name</span>
+
+                  <span>
+                    Your name
+                  </span>
 
                   <input
                     type="text"
@@ -328,10 +439,17 @@ export default function Home() {
                     maxLength={24}
                     autoFocus
                   />
+
                 </label>
 
+
+                {/* ROOM CODE */}
+
                 <label className="home-field">
-                  <span>Room code</span>
+
+                  <span>
+                    Room code
+                  </span>
 
                   <input
                     type="text"
@@ -345,102 +463,223 @@ export default function Home() {
                     maxLength={6}
                     className="room-code-input"
                   />
+
                 </label>
 
+
                 <button
-                  className="form-cyan-button"
                   type="submit"
+                  className="form-cyan-button"
                   disabled={busy}
                 >
+
                   {busy
                     ? "Joining..."
                     : "Join Room →"}
+
                 </button>
 
               </form>
 
+
               <button
+                type="button"
                 className="form-back-button"
                 onClick={() => {
                   setError("");
                   setView("choice");
                 }}
+                disabled={busy}
               >
+
                 ← Back
+
               </button>
 
             </div>
+
           )}
+
 
           {/* ERROR */}
 
           {error && (
+
             <div className="home-error">
               {error}
             </div>
+
           )}
 
         </section>
 
-        {/* ================= FEATURES ================= */}
+      </main>
 
-        <section
-          className="home-features"
-          id="how-it-works"
-        >
 
-          <div className="feature-item">
+      {/* ============================================
+          HOW IT WORKS
+          SEPARATE SECTION
+      ============================================ */}
 
-            <div className="feature-icon yellow-icon">
+      <section
+        className="how-it-works"
+        id="how-it-works"
+      >
+
+        <div className="how-header">
+
+          <div className="how-badge">
+            HOW IT WORKS
+          </div>
+
+          <h2>
+            Watch together in
+            <span>
+              {" "}four simple steps.
+            </span>
+          </h2>
+
+          <p>
+            Create a room, invite your friends,
+            and start watching YouTube together.
+          </p>
+
+        </div>
+
+
+        {/* STEPS */}
+
+        <div className="steps-container">
+
+
+          {/* STEP 01 */}
+
+          <div className="step-card">
+
+            <div className="step-number">
+              01
+            </div>
+
+            <div className="step-icon yellow-step">
+              +
+            </div>
+
+            <h3>
+              Create a Room
+            </h3>
+
+            <p>
+              Start a new watch party and
+              get a unique room code.
+            </p>
+
+          </div>
+
+
+          {/* STEP 02 */}
+
+          <div className="step-card">
+
+            <div className="step-number">
+              02
+            </div>
+
+            <div className="step-icon cyan-step">
+              ↗
+            </div>
+
+            <h3>
+              Invite Friends
+            </h3>
+
+            <p>
+              Share your room code with
+              friends and let them join.
+            </p>
+
+          </div>
+
+
+          {/* STEP 03 */}
+
+          <div className="step-card">
+
+            <div className="step-number">
+              03
+            </div>
+
+            <div className="step-icon yellow-step">
+              ▶
+            </div>
+
+            <h3>
+              Choose a Video
+            </h3>
+
+            <p>
+              Add a YouTube video and
+              start watching together.
+            </p>
+
+          </div>
+
+
+          {/* STEP 04 */}
+
+          <div className="step-card">
+
+            <div className="step-number">
+              04
+            </div>
+
+            <div className="step-icon cyan-step">
               ⚡
             </div>
 
-            <div>
-              <h3>Real-time Sync</h3>
-              <p>
-                Everyone stays in perfect sync
-              </p>
-            </div>
+            <h3>
+              Watch in Sync
+            </h3>
+
+            <p>
+              Play, pause and seek together
+              in real time.
+            </p>
 
           </div>
 
-          <div className="feature-divider"></div>
+        </div>
 
-          <div className="feature-item">
 
-            <div className="feature-icon cyan-icon">
-              💬
-            </div>
+        {/* HOST / MODERATOR */}
 
-            <div>
-              <h3>Live Chat</h3>
-              <p>
-                Chat with your friends while watching
-              </p>
-            </div>
+        <div className="sync-info">
+
+          <div className="sync-info-icon">
+            👑
+          </div>
+
+          <div>
+
+            <h3>
+              Host & Moderator Controls
+            </h3>
+
+            <p>
+              Hosts and moderators can play,
+              pause, seek and change videos
+              while everyone stays synchronized.
+            </p>
 
           </div>
 
-          <div className="feature-divider"></div>
+        </div>
 
-          <div className="feature-item">
+      </section>
 
-            <div className="feature-icon yellow-icon">
-              👥
-            </div>
 
-            <div>
-              <h3>Watch Together</h3>
-              <p>
-                Enjoy YouTube with your friends
-              </p>
-            </div>
-
-          </div>
-
-        </section>
-
-      </main>
+      {/* ============================================
+          FOOTER
+      ============================================ */}
 
       <footer className="home-footer">
         WatchParty · Watch together, anywhere.
