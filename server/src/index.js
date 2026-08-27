@@ -30,6 +30,6 @@ io.on("connection", (socket) => {
   handler.register();
 });
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Watch Party server listening on :${PORT}`);
 });
