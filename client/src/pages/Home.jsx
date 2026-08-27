@@ -170,7 +170,7 @@ export default function Home() {
           />
 
           <button
-            className="btn btn-ghost"
+            className="btn btn-teal"
             type="submit"
             disabled={busy}
           >

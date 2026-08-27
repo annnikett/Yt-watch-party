@@ -651,7 +651,7 @@ export default function Room() {
         <div className="header-actions">
 
           <button
-            className="btn btn-ghost"
+            className="btn btn-teal"
             onClick={
               copyInvite
             }
@@ -660,7 +660,7 @@ export default function Room() {
           </button>
 
           <button
-            className="btn btn-ghost"
+            className="btn btn-danger"
             onClick={() =>
               navigate("/")
             }

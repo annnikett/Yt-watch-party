@@ -35,7 +35,7 @@ export default function Chat({ messages, you, onSend }) {
           placeholder="Send a message"
           maxLength={500}
         />
-        <button className="btn btn-ghost" type="submit">Send</button>
+        <button className="btn btn-gold" type="submit">Send</button>
       </form>
     </div>
   );
