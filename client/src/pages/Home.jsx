@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SERVER_URL } from "../socket.js";
 
@@ -18,6 +18,29 @@ export default function Home() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const [showHomeBtn, setShowHomeBtn] = useState(false);
+
+  // ============================================
+  // SHOW FLOATING HOME BUTTON ONLY WHEN
+  // "HOW IT WORKS" SECTION IS IN VIEW
+  // ============================================
+
+  useEffect(() => {
+    const section = document.getElementById("how-it-works");
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowHomeBtn(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
+  }, []);
 
   const saveUsername = (name) => {
     localStorage.setItem("wp_username", name);
@@ -100,6 +123,37 @@ export default function Home() {
     <div className="home-page">
 
       {/* ============================================
+          FLOATING HOME BUTTON
+          Only visible while "How it works" is in view
+      ============================================ */}
+
+      {showHomeBtn && (
+
+        <button
+          type="button"
+          className="floating-home-btn"
+          onClick={() => {
+            setView("choice");
+            setError("");
+
+            const homeSection = document.getElementById("home");
+
+            if (homeSection) {
+              homeSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }
+          }}
+        >
+          <span className="floating-home-icon">▶</span>
+          Home
+        </button>
+
+      )}
+
+
+      {/* ============================================
           BACKGROUND
       ============================================ */}
 
@@ -124,10 +178,14 @@ export default function Home() {
             setView("choice");
             setError("");
 
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
+            const homeSection = document.getElementById("home");
+
+            if (homeSection) {
+              homeSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }
           }}
         >
 
