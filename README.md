@@ -5,7 +5,7 @@ player follows along in real time — play, pause, seek, and video changes all
 broadcast instantly over WebSockets.
 
 **Live demo:** _add your deployed URL here after deploying, e.g._
-`https://watch-party.onrender.com`
+`https://yt-watch-party-client.onrender.com/`
 
 ## Stack
 
