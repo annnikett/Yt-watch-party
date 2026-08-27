@@ -6,37 +6,11 @@ export default function Home() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  /*
-   * Always start blank — don't prefill from
-   * localStorage. Every visitor (host or joiner)
-   * types their own name fresh each time.
-   */
   const [username, setUsername] = useState("");
-
-  /*
-   * If the invite link included ?code=XXXXXX,
-   * pre-fill the room code field.
-   */
   const [joinCode, setJoinCode] = useState(
     () => (searchParams.get("code") || "").toUpperCase()
   );
 
-  /*
-   * ==================================================
-   * VIEW STATE
-   * ==================================================
-   *
-   * "choice" — two big buttons: Create / Join.
-   * "create" — only the create-room form.
-   * "join"   — only the join-room form.
-   *
-   * Create and Join are NEVER shown together, so
-   * there's nothing to misclick between them.
-   *
-   * If an invite link brought the visitor here
-   * (?code=XXXXXX present), we skip straight to
-   * the join view.
-   */
   const [view, setView] = useState(
     () => (searchParams.get("code") ? "join" : "choice")
   );
@@ -45,15 +19,13 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const saveUsername = (name) => {
-    localStorage.setItem(
-      "wp_username",
-      name
-    );
+    localStorage.setItem("wp_username", name);
   };
 
+  // CREATE ROOM
   const handleCreate = async () => {
     if (!username.trim()) {
-      setError("Enter a name first.");
+      setError("Please enter your name.");
       return;
     }
 
@@ -61,48 +33,37 @@ export default function Home() {
     setBusy(true);
 
     try {
-      const res = await fetch(
-        `${SERVER_URL}/api/rooms`,
-        {
-          method: "POST",
-        }
-      );
+      const res = await fetch(`${SERVER_URL}/api/rooms`, {
+        method: "POST",
+      });
 
       if (!res.ok) {
-        throw new Error(
-          "Could not create room"
-        );
+        throw new Error("Could not create room.");
       }
 
       const data = await res.json();
 
-      saveUsername(
-        username.trim()
-      );
+      saveUsername(username.trim());
 
-      navigate(
-        `/room/${data.roomId}`
-      );
+      navigate(`/room/${data.roomId}`);
     } catch (err) {
-      setError(
-        err.message ||
-          "Something went wrong"
-      );
+      setError(err.message || "Something went wrong.");
     } finally {
       setBusy(false);
     }
   };
 
+  // JOIN ROOM
   const handleJoin = async (e) => {
     e.preventDefault();
 
     if (!username.trim()) {
-      setError("Enter a name first.");
+      setError("Please enter your name.");
       return;
     }
 
     if (!joinCode.trim()) {
-      setError("Enter a room code.");
+      setError("Please enter a room code.");
       return;
     }
 
@@ -110,195 +71,381 @@ export default function Home() {
     setBusy(true);
 
     try {
-      const code =
-        joinCode
-          .trim()
-          .toUpperCase();
+      const code = joinCode.trim().toUpperCase();
 
-      const res = await fetch(
-        `${SERVER_URL}/api/rooms/${code}`
-      );
+      const res = await fetch(`${SERVER_URL}/api/rooms/${code}`);
 
       if (!res.ok) {
-        throw new Error(
-          "Room not found. Check the code."
-        );
+        throw new Error("Room not found. Check the room code.");
       }
 
-      saveUsername(
-        username.trim()
-      );
+      saveUsername(username.trim());
 
-      navigate(
-        `/room/${code}`
-      );
+      navigate(`/room/${code}`);
     } catch (err) {
-      setError(
-        err.message ||
-          "Something went wrong"
-      );
+      setError(err.message || "Something went wrong.");
     } finally {
       setBusy(false);
     }
   };
 
-  const goToChoice = () => {
-    setError("");
-    setView("choice");
-  };
-
   return (
-    <div className="screen home-screen">
-      <div className="marquee">
-        <span className="marquee-dot" />
+    <div className="home-page">
 
-        <h1>Watch Party</h1>
+      {/* Background */}
+      <div className="home-glow home-glow-yellow"></div>
+      <div className="home-glow home-glow-cyan"></div>
 
-        <p className="tagline">
-          Press play together. Anywhere.
-        </p>
-      </div>
+      <div className="home-grid home-grid-left"></div>
+      <div className="home-grid home-grid-right"></div>
 
-      <div className="card">
+      {/* ================= NAVBAR ================= */}
 
-        {/* ==========================================
-            STEP 1: CHOICE SCREEN
-            Only two big buttons. No name/code
-            fields yet, so nothing to misclick.
-        ========================================== */}
-        {view === "choice" && (
-          <>
-            <button
-              className="btn btn-primary"
-              onClick={() =>
-                setView("create")
-              }
-            >
-              Start a new room
-            </button>
+      <header className="home-navbar">
 
-            <div className="divider">
-              <span>or</span>
-            </div>
+        <div
+          className="home-logo"
+          onClick={() => setView("choice")}
+        >
+          <div className="logo-icon">
+            ▶
+          </div>
 
-            <button
-              className="btn btn-teal"
-              onClick={() =>
-                setView("join")
-              }
-            >
-              Join a room
-            </button>
-          </>
-        )}
+          <span>
+            Watch<span>Party</span>
+          </span>
+        </div>
 
-        {/* ==========================================
-            STEP 2a: CREATE ROOM
-            Only the create action is here.
-        ========================================== */}
-        {view === "create" && (
-          <>
-            <label className="field">
-              <span>Your name</span>
+        <nav className="home-nav">
 
-              <input
-                value={username}
-                onChange={(e) =>
-                  setUsername(
-                    e.target.value
-                  )
-                }
-                placeholder="e.g. Sam"
-                maxLength={24}
-                autoFocus
-              />
-            </label>
+          <a href="#home" className="active">
+            Home
+          </a>
 
-            <button
-              className="btn btn-teal"
-              onClick={handleCreate}
-              disabled={busy}
-            >
-              {busy
-                ? "Creating..."
-                : "Start a new room"}
-            </button>
+          <a href="#how-it-works">
+            How it works
+          </a>
 
-            <button
-              className="btn btn-danger"
-              onClick={goToChoice}
-              disabled={busy}
-            >
-              ← Back
-            </button>
-          </>
-        )}
+          <a
+            href="https://github.com/annnikett/Yt-watch-party"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
 
-        {/* ==========================================
-            STEP 2b: JOIN ROOM
-            Only the join action is here.
-        ========================================== */}
-        {view === "join" && (
-          <>
-            <label className="field">
-              <span>Your name</span>
+        </nav>
 
-              <input
-                value={username}
-                onChange={(e) =>
-                  setUsername(
-                    e.target.value
-                  )
-                }
-                placeholder="e.g. Sam"
-                maxLength={24}
-                autoFocus
-              />
-            </label>
+      </header>
 
-            <form
-              onSubmit={handleJoin}
-              className="join-form"
-            >
-              <input
-                value={joinCode}
-                onChange={(e) =>
-                  setJoinCode(
-                    e.target.value
-                  )
-                }
-                placeholder="Room code (e.g. K7QX9B)"
-                maxLength={6}
-                className="code-input"
-              />
+      {/* ================= MAIN ================= */}
+
+      <main className="home-main" id="home">
+
+        <section className="hero-section">
+
+          {/* Badge */}
+
+          <div className="hero-badge">
+            <span className="hero-badge-dot"></span>
+            Watch together in real-time
+          </div>
+
+          {/* Heading */}
+
+          <h1 className="hero-title">
+            Watch Together.
+            <br />
+            <span>Anywhere.</span>
+          </h1>
+
+          {/* Description */}
+
+          <p className="hero-description">
+            Create a room and watch YouTube with your friends
+            <br />
+            in <span>perfect sync.</span>
+          </p>
+
+          {/* ================= CHOICE ================= */}
+
+          {view === "choice" && (
+            <div className="room-choice">
+
+              {/* CREATE */}
 
               <button
-                className="btn btn-teal"
-                type="submit"
+                className="room-action create-action"
+                onClick={() => {
+                  setError("");
+                  setView("create");
+                }}
+              >
+
+                <div className="action-icon">
+                  +
+                </div>
+
+                <div className="action-content">
+                  <h2>Create Room</h2>
+                  <p>
+                    Start a new watch party
+                  </p>
+                </div>
+
+                <div className="action-arrow">
+                  →
+                </div>
+
+              </button>
+
+              {/* OR */}
+
+              <div className="choice-or">
+                OR
+              </div>
+
+              {/* JOIN */}
+
+              <button
+                className="room-action join-action"
+                onClick={() => {
+                  setError("");
+                  setView("join");
+                }}
+              >
+
+                <div className="action-icon">
+                  ↪
+                </div>
+
+                <div className="action-content">
+                  <h2>Join Room</h2>
+                  <p>
+                    Join with a room code
+                  </p>
+                </div>
+
+                <div className="action-arrow">
+                  →
+                </div>
+
+              </button>
+
+            </div>
+          )}
+
+          {/* ================= CREATE FORM ================= */}
+
+          {view === "create" && (
+            <div className="home-form-card">
+
+              <div className="form-heading">
+
+                <div className="form-icon yellow">
+                  +
+                </div>
+
+                <div>
+                  <h2>Create a Room</h2>
+                  <p>
+                    Enter your name to get started
+                  </p>
+                </div>
+
+              </div>
+
+              <label className="home-field">
+                <span>Your name</span>
+
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) =>
+                    setUsername(e.target.value)
+                  }
+                  placeholder="e.g. Aniket"
+                  maxLength={24}
+                  autoFocus
+                />
+              </label>
+
+              <button
+                className="form-primary-button"
+                onClick={handleCreate}
                 disabled={busy}
               >
                 {busy
-                  ? "Joining..."
-                  : "Join"}
+                  ? "Creating..."
+                  : "Create Room →"}
               </button>
-            </form>
 
-            <button
-              className="btn btn-danger"
-              onClick={goToChoice}
-              disabled={busy}
-            >
-              ← Back
-            </button>
-          </>
-        )}
+              <button
+                className="form-back-button"
+                onClick={() => {
+                  setError("");
+                  setView("choice");
+                }}
+              >
+                ← Back
+              </button>
 
-        {error && (
-          <p className="error-text">
-            {error}
-          </p>
-        )}
-      </div>
+            </div>
+          )}
+
+          {/* ================= JOIN FORM ================= */}
+
+          {view === "join" && (
+            <div className="home-form-card">
+
+              <div className="form-heading">
+
+                <div className="form-icon cyan">
+                  ↪
+                </div>
+
+                <div>
+                  <h2>Join a Room</h2>
+                  <p>
+                    Enter your name and room code
+                  </p>
+                </div>
+
+              </div>
+
+              <form onSubmit={handleJoin}>
+
+                <label className="home-field">
+                  <span>Your name</span>
+
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) =>
+                      setUsername(e.target.value)
+                    }
+                    placeholder="e.g. Aniket"
+                    maxLength={24}
+                    autoFocus
+                  />
+                </label>
+
+                <label className="home-field">
+                  <span>Room code</span>
+
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) =>
+                      setJoinCode(
+                        e.target.value.toUpperCase()
+                      )
+                    }
+                    placeholder="ABC123"
+                    maxLength={6}
+                    className="room-code-input"
+                  />
+                </label>
+
+                <button
+                  className="form-cyan-button"
+                  type="submit"
+                  disabled={busy}
+                >
+                  {busy
+                    ? "Joining..."
+                    : "Join Room →"}
+                </button>
+
+              </form>
+
+              <button
+                className="form-back-button"
+                onClick={() => {
+                  setError("");
+                  setView("choice");
+                }}
+              >
+                ← Back
+              </button>
+
+            </div>
+          )}
+
+          {/* ERROR */}
+
+          {error && (
+            <div className="home-error">
+              {error}
+            </div>
+          )}
+
+        </section>
+
+        {/* ================= FEATURES ================= */}
+
+        <section
+          className="home-features"
+          id="how-it-works"
+        >
+
+          <div className="feature-item">
+
+            <div className="feature-icon yellow-icon">
+              ⚡
+            </div>
+
+            <div>
+              <h3>Real-time Sync</h3>
+              <p>
+                Everyone stays in perfect sync
+              </p>
+            </div>
+
+          </div>
+
+          <div className="feature-divider"></div>
+
+          <div className="feature-item">
+
+            <div className="feature-icon cyan-icon">
+              💬
+            </div>
+
+            <div>
+              <h3>Live Chat</h3>
+              <p>
+                Chat with your friends while watching
+              </p>
+            </div>
+
+          </div>
+
+          <div className="feature-divider"></div>
+
+          <div className="feature-item">
+
+            <div className="feature-icon yellow-icon">
+              👥
+            </div>
+
+            <div>
+              <h3>Watch Together</h3>
+              <p>
+                Enjoy YouTube with your friends
+              </p>
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+      <footer className="home-footer">
+        WatchParty · Watch together, anywhere.
+      </footer>
+
     </div>
   );
 }
