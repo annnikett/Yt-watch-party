@@ -528,12 +528,26 @@ export default function Room() {
   };
 
   // ==================================================
-  // COPY INVITE
+  // COPY INVITE LINK
   // ==================================================
 
   const copyInvite = async () => {
+    /*
+     * We copy a link to the ROOT page with the
+     * room code as a query param (?code=XXXXXX),
+     * NOT a link straight into /room/:roomId.
+     *
+     * Why:
+     * - The root path always resolves correctly,
+     *   even on static hosts (no 404).
+     * - Home.jsx reads ?code= and pre-fills the
+     *   room code field, but the visitor still
+     *   has to type their OWN name and press
+     *   Join — nothing auto-joins with the
+     *   host's name.
+     */
     const inviteUrl =
-      `${window.location.origin}/room/${roomId}`;
+      `${window.location.origin}/?code=${roomId}`;
 
     try {
       await navigator.clipboard.writeText(

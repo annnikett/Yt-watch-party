@@ -1,15 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { SERVER_URL } from "../socket.js";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [username, setUsername] = useState(
-    () => localStorage.getItem("wp_username") || ""
+ const [username, setUsername] = useState("");
+
+  /*
+   * If the invite link included ?code=XXXXXX,
+   * pre-fill the room code field. The user
+   * still has to type their own name and
+   * press Join — nothing auto-joins.
+   */
+  const [joinCode, setJoinCode] = useState(
+    () => (searchParams.get("code") || "").toUpperCase()
   );
 
-  const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
