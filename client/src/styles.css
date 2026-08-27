@@ -180,6 +180,7 @@ button, input { font-family: inherit; }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+
 .btn-primary {
   background: linear-gradient(180deg, var(--gold-soft), var(--gold));
   color: #201603;

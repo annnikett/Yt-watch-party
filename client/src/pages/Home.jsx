@@ -6,16 +6,39 @@ export default function Home() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
- const [username, setUsername] = useState("");
+  /*
+   * Always start blank — don't prefill from
+   * localStorage. Every visitor (host or joiner)
+   * types their own name fresh each time.
+   */
+  const [username, setUsername] = useState("");
 
   /*
    * If the invite link included ?code=XXXXXX,
-   * pre-fill the room code field. The user
-   * still has to type their own name and
-   * press Join — nothing auto-joins.
+   * pre-fill the room code field.
    */
   const [joinCode, setJoinCode] = useState(
     () => (searchParams.get("code") || "").toUpperCase()
+  );
+
+  /*
+   * ==================================================
+   * VIEW STATE
+   * ==================================================
+   *
+   * "choice" — two big buttons: Create / Join.
+   * "create" — only the create-room form.
+   * "join"   — only the join-room form.
+   *
+   * Create and Join are NEVER shown together, so
+   * there's nothing to misclick between them.
+   *
+   * If an invite link brought the visitor here
+   * (?code=XXXXXX present), we skip straight to
+   * the join view.
+   */
+  const [view, setView] = useState(
+    () => (searchParams.get("code") ? "join" : "choice")
   );
 
   const [busy, setBusy] = useState(false);
@@ -119,6 +142,11 @@ export default function Home() {
     }
   };
 
+  const goToChoice = () => {
+    setError("");
+    setView("choice");
+  };
+
   return (
     <div className="screen home-screen">
       <div className="marquee">
@@ -132,59 +160,138 @@ export default function Home() {
       </div>
 
       <div className="card">
-        <label className="field">
-          <span>Your name</span>
 
-          <input
-            value={username}
-            onChange={(e) =>
-              setUsername(
-                e.target.value
-              )
-            }
-            placeholder="e.g. Sam"
-            maxLength={24}
-          />
-        </label>
+        {/* ==========================================
+            STEP 1: CHOICE SCREEN
+            Only two big buttons. No name/code
+            fields yet, so nothing to misclick.
+        ========================================== */}
+        {view === "choice" && (
+          <>
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                setView("create")
+              }
+            >
+              Start a new room
+            </button>
 
-        <button
-          className="btn btn-primary"
-          onClick={handleCreate}
-          disabled={busy}
-        >
-          {busy
-            ? "Creating..."
-            : "Start a new room"}
-        </button>
+            <div className="divider">
+              <span>or</span>
+            </div>
 
-        <div className="divider">
-          <span>or join one</span>
-        </div>
+            <button
+              className="btn btn-teal"
+              onClick={() =>
+                setView("join")
+              }
+            >
+              Join a room
+            </button>
+          </>
+        )}
 
-        <form
-          onSubmit={handleJoin}
-          className="join-form"
-        >
-          <input
-            value={joinCode}
-            onChange={(e) =>
-              setJoinCode(
-                e.target.value
-              )
-            }
-            placeholder="Room code (e.g. K7QX9B)"
-            maxLength={6}
-            className="code-input"
-          />
+        {/* ==========================================
+            STEP 2a: CREATE ROOM
+            Only the create action is here.
+        ========================================== */}
+        {view === "create" && (
+          <>
+            <label className="field">
+              <span>Your name</span>
 
-          <button
-            className="btn btn-teal"
-            type="submit"
-            disabled={busy}
-          >
-            Join
-          </button>
-        </form>
+              <input
+                value={username}
+                onChange={(e) =>
+                  setUsername(
+                    e.target.value
+                  )
+                }
+                placeholder="e.g. Sam"
+                maxLength={24}
+                autoFocus
+              />
+            </label>
+
+            <button
+              className="btn btn-teal"
+              onClick={handleCreate}
+              disabled={busy}
+            >
+              {busy
+                ? "Creating..."
+                : "Start a new room"}
+            </button>
+
+            <button
+              className="btn btn-danger"
+              onClick={goToChoice}
+              disabled={busy}
+            >
+              ← Back
+            </button>
+          </>
+        )}
+
+        {/* ==========================================
+            STEP 2b: JOIN ROOM
+            Only the join action is here.
+        ========================================== */}
+        {view === "join" && (
+          <>
+            <label className="field">
+              <span>Your name</span>
+
+              <input
+                value={username}
+                onChange={(e) =>
+                  setUsername(
+                    e.target.value
+                  )
+                }
+                placeholder="e.g. Sam"
+                maxLength={24}
+                autoFocus
+              />
+            </label>
+
+            <form
+              onSubmit={handleJoin}
+              className="join-form"
+            >
+              <input
+                value={joinCode}
+                onChange={(e) =>
+                  setJoinCode(
+                    e.target.value
+                  )
+                }
+                placeholder="Room code (e.g. K7QX9B)"
+                maxLength={6}
+                className="code-input"
+              />
+
+              <button
+                className="btn btn-teal"
+                type="submit"
+                disabled={busy}
+              >
+                {busy
+                  ? "Joining..."
+                  : "Join"}
+              </button>
+            </form>
+
+            <button
+              className="btn btn-danger"
+              onClick={goToChoice}
+              disabled={busy}
+            >
+              ← Back
+            </button>
+          </>
+        )}
 
         {error && (
           <p className="error-text">
