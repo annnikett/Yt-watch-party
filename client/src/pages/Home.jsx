@@ -19,6 +19,23 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // ============================================
+  // WHICH PAGE IS ACTIVE — "home" OR "how"
+  // Switching is instant, no scrolling involved
+  // ============================================
+
+  const [page, setPage] = useState("home");
+
+  const goHome = () => {
+    setPage("home");
+    setView("choice");
+    setError("");
+  };
+
+  const goHowItWorks = () => {
+    setPage("how");
+  };
+
   const saveUsername = (name) => {
     localStorage.setItem("wp_username", name);
   };
@@ -97,7 +114,7 @@ export default function Home() {
   };
 
   return (
-    <div className="home-page">
+    <div className={`home-page${page === "home" ? " no-scroll" : ""}`}>
 
       {/* ============================================
           BACKGROUND
@@ -120,19 +137,7 @@ export default function Home() {
 
         <div
           className="home-logo"
-          onClick={() => {
-            setView("choice");
-            setError("");
-
-            const homeSection = document.getElementById("home");
-
-            if (homeSection) {
-              homeSection.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              });
-            }
-          }}
+          onClick={goHome}
         >
 
           <div className="logo-icon">
@@ -151,13 +156,24 @@ export default function Home() {
         <nav className="home-nav">
 
           <a
-            href="#home"
-            className="active"
+            href="#"
+            className={page === "home" ? "active" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              goHome();
+            }}
           >
             Home
           </a>
 
-          <a href="#how-it-works">
+          <a
+            href="#"
+            className={page === "how" ? "active" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              goHowItWorks();
+            }}
+          >
             How it works
           </a>
 
@@ -177,6 +193,8 @@ export default function Home() {
       {/* ============================================
           HOME / HERO
       ============================================ */}
+
+      {page === "home" && (
 
       <main
         className="home-main"
@@ -519,11 +537,15 @@ export default function Home() {
 
       </main>
 
+      )}
+
 
       {/* ============================================
           HOW IT WORKS
           SEPARATE SECTION
       ============================================ */}
+
+      {page === "how" && (
 
       <section
         className="how-it-works"
@@ -680,14 +702,20 @@ export default function Home() {
 
       </section>
 
+      )}
+
 
       {/* ============================================
           FOOTER
       ============================================ */}
 
+      {page === "how" && (
+
       <footer className="home-footer">
         WatchParty · Watch together, anywhere.
       </footer>
+
+      )}
 
     </div>
   );
