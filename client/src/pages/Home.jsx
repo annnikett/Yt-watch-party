@@ -141,7 +141,7 @@ export default function Home() {
         >
 
           <div className="logo-icon">
-             🎬
+            ▶
           </div>
 
           <span>
