@@ -178,7 +178,7 @@ export default function Home() {
           </a>
 
           <a
-            href="https://github.com/annnikett/Yt-watch-party"
+            href="https://github.com/annnikett"
             target="_blank"
             rel="noreferrer"
           >
