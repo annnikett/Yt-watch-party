@@ -68,10 +68,13 @@ function ActionsMenu({ participant, onAction }) {
         onClick={toggleOpen}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Participant actions"
+        title="Actions"
       >
-        Actions
-        <svg className="action-trigger-caret" width="10" height="6" viewBox="0 0 10 6" fill="none">
-          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="4" r="1.6" fill="currentColor" />
+          <circle cx="10" cy="10" r="1.6" fill="currentColor" />
+          <circle cx="10" cy="16" r="1.6" fill="currentColor" />
         </svg>
       </button>
 
@@ -118,6 +121,18 @@ function ActionsMenu({ participant, onAction }) {
               <span className="action-menu-icon action-menu-icon-host">H</span>
               Make host
             </button>
+
+            <div className="action-menu-divider" />
+
+            <button
+              type="button"
+              className="action-menu-item action-menu-item-danger"
+              role="menuitem"
+              onClick={() => run("remove_participant", { userId: participant.userId })}
+            >
+              <span className="action-menu-icon action-menu-icon-danger">✕</span>
+              Remove from room
+            </button>
           </div>,
           document.body
         )}
@@ -131,7 +146,11 @@ export default function ParticipantList({ participants, you, isHost, onAction })
       <h2>Who's here <span className="count">{participants.length}</span></h2>
       <ul className="participant-list">
         {participants.map((p) => (
-          <li key={p.userId} className={`participant-row role-${p.role}`}>
+          <li
+            key={p.userId}
+            className={`participant-row role-${p.role}`}
+            title={ROLE_LABEL[p.role] || p.role}
+          >
             <span className="avatar">{p.username.slice(0, 1).toUpperCase()}</span>
 
             <div className="participant-info">
@@ -139,21 +158,12 @@ export default function ParticipantList({ participants, you, isHost, onAction })
                 {p.username}
                 {p.userId === you?.userId && <em> (you)</em>}
               </span>
-              <span className={`role-badge role-badge-${p.role}`}>
-                {ROLE_LABEL[p.role] || p.role}
-              </span>
+              <span className={`role-dot role-dot-${p.role}`} aria-hidden="true" />
             </div>
 
             {isHost && p.userId !== you?.userId && (
               <div className="participant-actions">
                 <ActionsMenu participant={p} onAction={onAction} />
-                <button
-                  type="button"
-                  className="remove-btn"
-                  onClick={() => onAction("remove_participant", { userId: p.userId })}
-                >
-                  Remove
-                </button>
               </div>
             )}
           </li>

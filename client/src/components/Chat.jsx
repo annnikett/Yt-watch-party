@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
+function formatTime(ts) {
+  if (!ts) return "";
+  try {
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
 export default function Chat({ messages, you, onSend }) {
   const [text, setText] = useState("");
   const listRef = useRef(null);
@@ -23,7 +32,10 @@ export default function Chat({ messages, you, onSend }) {
         {messages.length === 0 && <p className="chat-empty">No messages yet — say hi.</p>}
         {messages.map((m) => (
           <div key={m.id} className={`chat-msg ${m.userId === you?.userId ? "own" : ""}`}>
-            <span className="chat-author">{m.username}</span>
+            <span className="chat-author">
+              {m.username}
+              {m.sentAt && <span className="chat-time">{formatTime(m.sentAt)}</span>}
+            </span>
             <span className="chat-text">{m.text}</span>
           </div>
         ))}
