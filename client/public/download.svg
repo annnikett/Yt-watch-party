@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#ff3b5c"></rect>
+  
+  <!-- Clapperboard -->
+  <path d="M10 20h44v34H10z" fill="#ff3b5c" stroke="#17121c" stroke-width="4"></path>
+
+  <!-- Clapper -->
+  <path d="M10 20l5-11h44l-5 11z" fill="#f1f1f1" stroke="#17121c" stroke-width="4"></path>
+
+  <!-- Stripes -->
+  <path d="M24 9l-5 11h9l5-11z" fill="#34313a"></path>
+  <path d="M42 9l-5 11h9l5-11z" fill="#34313a"></path>
+
+  <!-- Play -->
+  <path d="M27 29l15 9-15 9z" fill="white"></path>
+</svg>
