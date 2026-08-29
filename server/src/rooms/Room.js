@@ -25,6 +25,8 @@ class Room {
 
     this.chatHistory = [];
 
+    this.queue = [];
+
     this.createdAt = Date.now();
   }
 
@@ -201,6 +203,42 @@ class Room {
     }
 
     return message;
+  }
+
+  // ==================================================
+  // QUEUE
+  // ==================================================
+
+  addToQueue(item) {
+    this.queue.push(item);
+
+    return item;
+  }
+
+  removeFromQueue(itemId) {
+    const index = this.queue.findIndex(
+      (item) => item.id === itemId
+    );
+
+    if (index === -1) {
+      return null;
+    }
+
+    const [removed] = this.queue.splice(
+      index,
+      1
+    );
+
+    return removed;
+  }
+
+  broadcastQueue() {
+    this.broadcast(
+      "queue_updated",
+      {
+        queue: this.queue,
+      }
+    );
   }
 
   // ==================================================

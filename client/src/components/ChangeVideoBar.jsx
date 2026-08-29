@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function extractVideoId(input) {
+export function extractVideoId(input) {
   const trimmed = input.trim();
   if (/^[\w-]{11}$/.test(trimmed)) return trimmed; // already a raw video id
   try {

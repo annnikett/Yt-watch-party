@@ -64,6 +64,16 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     useRef(0);
 
   // ==================================================
+  // STUCK-VIDEO WATCHDOG
+  // ==================================================
+
+  const watchdogRef =
+    useRef(null);
+
+  const stuckSinceRef =
+    useRef(0);
+
+  // ==================================================
   // UPDATE ALL LATEST REFS
   // ==================================================
 
@@ -203,6 +213,130 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
         lastKnownTimeRef.current =
           current;
       }, 1000);
+  };
+
+  // ==================================================
+  // STUCK-VIDEO WATCHDOG
+  // ==================================================
+
+  /*
+   * Sometimes the browser silently
+   * ignores a programmatic playVideo()
+   * call (autoplay policy, slow buffer,
+   * a stale command, etc).
+   *
+   * The video ends up "stuck" — server
+   * says PLAYING but the iframe is
+   * actually PAUSED / CUED / UNSTARTED.
+   *
+   * This checks periodically and
+   * nudges it back to life.
+   */
+  const runWatchdog = () => {
+    const player =
+      playerRef.current;
+
+    if (
+      !player ||
+      !readyRef.current
+    ) {
+      stuckSinceRef.current = 0;
+      return;
+    }
+
+    /*
+     * Don't fight an in-flight
+     * remote command.
+     */
+    if (
+      applyingRemoteRef.current
+    ) {
+      stuckSinceRef.current = 0;
+      return;
+    }
+
+    const pending =
+      pendingStateRef.current;
+
+    if (
+      !pending ||
+      pending.playState !==
+        "playing"
+    ) {
+      stuckSinceRef.current = 0;
+      return;
+    }
+
+    const YT =
+      window.YT;
+
+    if (!YT) {
+      return;
+    }
+
+    const playerState =
+      player.getPlayerState?.();
+
+    /*
+     * Already playing (or buffering,
+     * which usually resolves on its
+     * own) — nothing to do.
+     */
+    if (
+      playerState ===
+        YT.PlayerState.PLAYING ||
+      playerState ===
+        YT.PlayerState.BUFFERING
+    ) {
+      stuckSinceRef.current = 0;
+      return;
+    }
+
+    /*
+     * PAUSED / CUED / UNSTARTED while
+     * the server says PLAYING.
+     *
+     * Give it one watchdog tick's grace
+     * before acting, to avoid fighting
+     * a command that's about to land.
+     */
+    if (!stuckSinceRef.current) {
+      stuckSinceRef.current =
+        Date.now();
+      return;
+    }
+
+    console.log(
+      "WATCHDOG: video stuck, retrying play",
+      playerState
+    );
+
+    const targetTime =
+      getTargetTime(pending);
+
+    try {
+      if (
+        !canControlRef.current
+      ) {
+        player.mute();
+      }
+    } catch {}
+
+    try {
+      player.seekTo(
+        targetTime,
+        true
+      );
+    } catch {}
+
+    try {
+      player.playVideo();
+    } catch {}
+
+    lastKnownTimeRef.current =
+      targetTime;
+
+    stuckSinceRef.current = 0;
   };
 
   // ==================================================
@@ -1248,6 +1382,34 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
      *
      * Player is created only once.
      */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ==================================================
+  // START WATCHDOG
+  // ==================================================
+
+  useEffect(() => {
+    watchdogRef.current =
+      setInterval(
+        runWatchdog,
+        2000
+      );
+
+    return () => {
+      if (
+        watchdogRef.current
+      ) {
+        clearInterval(
+          watchdogRef.current
+        );
+
+        watchdogRef.current =
+          null;
+      }
+
+      stuckSinceRef.current = 0;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

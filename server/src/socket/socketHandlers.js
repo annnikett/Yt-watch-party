@@ -99,6 +99,30 @@ class MessageHandler {
     );
 
     this.socket.on(
+      "add_to_queue",
+      (payload) =>
+        this.handleAddToQueue(
+          payload
+        )
+    );
+
+    this.socket.on(
+      "remove_from_queue",
+      (payload) =>
+        this.handleRemoveFromQueue(
+          payload
+        )
+    );
+
+    this.socket.on(
+      "play_from_queue",
+      (payload) =>
+        this.handlePlayFromQueue(
+          payload
+        )
+    );
+
+    this.socket.on(
       "disconnect",
       () =>
         this.handleDisconnect()
@@ -220,6 +244,9 @@ class MessageHandler {
 
         chatHistory:
           room.chatHistory,
+
+        queue:
+          room.queue,
       }
     );
 
@@ -824,6 +851,182 @@ class MessageHandler {
       "chat_message",
       message
     );
+  }
+
+  // ==================================================
+  // ADD TO QUEUE
+  // ==================================================
+
+  handleAddToQueue({
+    videoId,
+    title,
+  } = {}) {
+    const room =
+      this.currentRoom();
+
+    const participant =
+      this.currentParticipant();
+
+    if (
+      !room ||
+      !participant
+    ) {
+      return;
+    }
+
+    if (!videoId) {
+      return this.fail(
+        "add_to_queue",
+        "videoId is required"
+      );
+    }
+
+    /*
+     * Anyone in the room can queue up
+     * a video (not just Host/Moderator).
+     */
+    const item =
+      room.addToQueue({
+        id:
+          nanoid(8),
+
+        videoId:
+          String(videoId),
+
+        title:
+          title
+            ? String(title).slice(
+                0,
+                200
+              )
+            : "",
+
+        addedBy:
+          participant.username,
+
+        addedByUserId:
+          participant.userId,
+
+        addedAt:
+          Date.now(),
+      });
+
+    room.broadcastQueue();
+
+    return item;
+  }
+
+  // ==================================================
+  // REMOVE FROM QUEUE
+  // ==================================================
+
+  handleRemoveFromQueue({
+    itemId,
+  } = {}) {
+    const room =
+      this.currentRoom();
+
+    const participant =
+      this.currentParticipant();
+
+    if (
+      !room ||
+      !participant
+    ) {
+      return;
+    }
+
+    const target =
+      room.queue.find(
+        (item) =>
+          item.id === itemId
+      );
+
+    if (!target) {
+      return this.fail(
+        "remove_from_queue",
+        "Queue item not found"
+      );
+    }
+
+    /*
+     * Host/Moderator can remove anything.
+     * A participant can remove only the
+     * items they personally added.
+     */
+    const isOwner =
+      target.addedByUserId ===
+      participant.userId;
+
+    if (
+      !canControlPlayback(
+        participant
+      ) &&
+      !isOwner
+    ) {
+      return this.fail(
+        "remove_from_queue",
+        "You can only remove videos you added"
+      );
+    }
+
+    room.removeFromQueue(
+      itemId
+    );
+
+    room.broadcastQueue();
+  }
+
+  // ==================================================
+  // PLAY FROM QUEUE
+  // ==================================================
+
+  handlePlayFromQueue({
+    itemId,
+  } = {}) {
+    const room =
+      this.currentRoom();
+
+    const participant =
+      this.currentParticipant();
+
+    if (
+      !room ||
+      !participant
+    ) {
+      return;
+    }
+
+    if (
+      !canControlPlayback(
+        participant
+      )
+    ) {
+      return this.fail(
+        "play_from_queue",
+        "Only Host/Moderator can play from the queue"
+      );
+    }
+
+    const target =
+      room.removeFromQueue(
+        itemId
+      );
+
+    if (!target) {
+      return this.fail(
+        "play_from_queue",
+        "Queue item not found"
+      );
+    }
+
+    room.applyChangeVideo(
+      target.videoId
+    );
+
+    room.broadcastSyncState();
+
+    room.broadcastQueue();
   }
 }
 

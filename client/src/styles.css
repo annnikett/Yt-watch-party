@@ -143,7 +143,8 @@ button, input { font-family: inherit; }
 .field input,
 .code-input,
 .chat-input-row input,
-.change-video-bar input {
+.change-video-bar input,
+.queue-title-input {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -157,14 +158,16 @@ button, input { font-family: inherit; }
 .field input::placeholder,
 .code-input::placeholder,
 .chat-input-row input::placeholder,
-.change-video-bar input::placeholder {
+.change-video-bar input::placeholder,
+.queue-title-input::placeholder {
   color: var(--text-faint);
 }
 
 .field input:focus,
 .code-input:focus,
 .chat-input-row input:focus,
-.change-video-bar input:focus {
+.change-video-bar input:focus,
+.queue-title-input:focus {
   border-color: var(--gold-dim);
   box-shadow: 0 0 0 3px rgba(242, 184, 75, 0.12);
   background: var(--panel-hover);
@@ -713,6 +716,180 @@ button, input { font-family: inherit; }
   background: var(--danger-soft);
   border-color: var(--danger);
   color: var(--danger);
+}
+/* ==================================================
+   CHAT / QUEUE TABS
+================================================== */
+
+.side-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.side-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  position: relative;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.side-tab:hover {
+  color: var(--text);
+  background: var(--panel-hover);
+}
+
+.side-tab.active {
+  color: var(--violet-soft);
+  background: var(--panel-hover);
+}
+
+.side-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--violet), var(--violet-soft));
+}
+
+.side-tab .tab-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.side-tab .tab-badge {
+  background: var(--violet-dim);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+
+/* ==================================================
+   QUEUE PANEL
+================================================== */
+
+.queue-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 280px;
+  overflow: hidden;
+}
+
+.queue-panel h2 {
+  flex-shrink: 0;
+}
+
+.queue-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-right: 2px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 7px;
+  animation: chipIn 0.2s ease backwards;
+}
+
+.queue-thumb {
+  width: 52px;
+  height: 39px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--panel-hover);
+}
+
+.queue-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.queue-item-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-added-by {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.queue-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.72rem;
+}
+
+.queue-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.queue-title-input {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 9px 12px;
+}
+
+.queue-remove-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-panel {

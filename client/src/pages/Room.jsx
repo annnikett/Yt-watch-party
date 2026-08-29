@@ -15,6 +15,7 @@ import YouTubePlayer from "../components/YouTubePlayer.jsx";
 import ParticipantList from "../components/ParticipantList.jsx";
 import ChangeVideoBar from "../components/ChangeVideoBar.jsx";
 import Chat from "../components/Chat.jsx";
+import Queue from "../components/Queue.jsx";
 
 export default function Room() {
   const { roomId } = useParams();
@@ -36,6 +37,12 @@ export default function Room() {
 
   const [messages, setMessages] =
     useState([]);
+
+  const [queue, setQueue] =
+    useState([]);
+
+  const [activeTab, setActiveTab] =
+    useState("chat");
 
   const [banner, setBanner] =
     useState("");
@@ -93,6 +100,7 @@ export default function Room() {
       state,
       participants,
       chatHistory,
+      queue,
     }) => {
       setYou(you);
 
@@ -102,6 +110,10 @@ export default function Room() {
 
       setMessages(
         chatHistory || []
+      );
+
+      setQueue(
+        queue || []
       );
 
       setVideoId(
@@ -277,6 +289,18 @@ export default function Room() {
     };
 
     // ==================================================
+    // QUEUE
+    // ==================================================
+
+    const onQueueUpdated = ({
+      queue,
+    }) => {
+      setQueue(
+        queue || []
+      );
+    };
+
+    // ==================================================
     // ERROR
     // ==================================================
 
@@ -334,6 +358,11 @@ export default function Room() {
     );
 
     socket.on(
+      "queue_updated",
+      onQueueUpdated
+    );
+
+    socket.on(
       "error_event",
       onErrorEvent
     );
@@ -385,6 +414,11 @@ export default function Room() {
       socket.off(
         "chat_message",
         onChatMessage
+      );
+
+      socket.off(
+        "queue_updated",
+        onQueueUpdated
       );
 
       socket.off(
@@ -463,6 +497,61 @@ export default function Room() {
       "change_video",
       {
         videoId: id,
+      }
+    );
+  };
+
+  // ==================================================
+  // QUEUE: ADD
+  // ==================================================
+
+   const handleAddToQueue = (
+    videoId,
+    title
+  ) => {
+    if (!videoId) {
+      return;
+    }
+
+    socket.emit(
+      "add_to_queue",
+      {
+        videoId,
+        title,
+      }
+    );
+  };
+
+  // ==================================================
+  // QUEUE: REMOVE
+  // ==================================================
+
+  const handleRemoveFromQueue = (
+    itemId
+  ) => {
+    socket.emit(
+      "remove_from_queue",
+      {
+        itemId,
+      }
+    );
+  };
+
+  // ==================================================
+  // QUEUE: PLAY NOW
+  // ==================================================
+
+  const handlePlayFromQueue = (
+    itemId
+  ) => {
+    if (!canControl) {
+      return;
+    }
+
+    socket.emit(
+      "play_from_queue",
+      {
+        itemId,
       }
     );
   };
@@ -776,20 +865,82 @@ export default function Room() {
             }
           />
 
-          <Chat
-            messages={
-              messages
-            }
-            you={you}
-            onSend={(text) =>
-              socket.emit(
-                "chat_message",
-                {
-                  text,
-                }
-              )
-            }
-          />
+          {/* ======================================
+              CHAT / QUEUE TABS
+          ====================================== */}
+
+          <div className="side-tabs">
+
+            <button
+              type="button"
+              className={`side-tab ${
+                activeTab === "chat"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("chat")
+              }
+            >
+              <span className="tab-icon">💬</span>
+              Chat
+            </button>
+
+            <button
+              type="button"
+              className={`side-tab ${
+                activeTab === "queue"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveTab("queue")
+              }
+            >
+              <span className="tab-icon">📋</span>
+              Queue
+              {queue.length > 0 && (
+                <span className="tab-badge">
+                  {queue.length}
+                </span>
+              )}
+            </button>
+
+          </div>
+
+          {activeTab === "chat" ? (
+            <Chat
+              messages={
+                messages
+              }
+              you={you}
+              onSend={(text) =>
+                socket.emit(
+                  "chat_message",
+                  {
+                    text,
+                  }
+                )
+              }
+            />
+          ) : (
+            <Queue
+              queue={queue}
+              you={you}
+              canControl={
+                canControl
+              }
+              onAdd={
+                handleAddToQueue
+              }
+              onRemove={
+                handleRemoveFromQueue
+              }
+              onPlayNow={
+                handlePlayFromQueue
+              }
+            />
+          )}
 
         </aside>
 
