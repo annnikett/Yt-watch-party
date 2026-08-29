@@ -314,24 +314,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     const targetTime =
       getTargetTime(pending);
 
-    try {
-      if (
-        !canControlRef.current
-      ) {
-        player.mute();
-      }
-    } catch {}
-
-    try {
-      player.seekTo(
-        targetTime,
-        true
-      );
-    } catch {}
-
-    try {
-      player.playVideo();
-    } catch {}
+    safePlay(
+      player,
+      targetTime,
+      canControlRef.current
+    );
 
     lastKnownTimeRef.current =
       targetTime;
@@ -415,6 +402,63 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   };
 
   // ==================================================
+  // SAFE AUTOPLAY (avoid browser autoplay-block)
+  // ==================================================
+
+  /*
+   * Browsers silently block a programmatic playVideo()
+   * call that carries audio UNLESS it happens directly
+   * inside a user gesture (a click handler).
+   *
+   * Our play/seek/load commands arrive after a socket
+   * round-trip (and sometimes an extra setTimeout), so
+   * by the time playVideo() actually runs, the browser
+   * no longer considers it "the user just clicked
+   * something" -- audible autoplay can get blocked with
+   * no error, which is why the video sometimes looks
+   * stuck / black until you interact with it.
+   *
+   * Fix: ALWAYS start muted (muted autoplay is never
+   * blocked), then unmute right after playback has
+   * begun. Unmuting AFTER playback already started is
+   * not treated as "autoplay with sound" by browsers, so
+   * it works reliably. Participants stay muted (existing
+   * design) unless they use YouTube's own volume button.
+   */
+  const safePlay = (
+    player,
+    targetTime,
+    unmuteAfter = false
+  ) => {
+    try {
+      player.mute();
+    } catch {}
+
+    try {
+      player.seekTo(
+        targetTime,
+        true
+      );
+    } catch {}
+
+    try {
+      player.playVideo();
+    } catch {}
+
+    if (unmuteAfter) {
+      setTimeout(() => {
+        try {
+          if (
+            canControlRef.current
+          ) {
+            playerRef.current?.unMute();
+          }
+        } catch {}
+      }, 300);
+    }
+  };
+
+  // ==================================================
   // PARTICIPANT AUTOPLAY
   // ==================================================
 
@@ -428,30 +472,19 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       return;
     }
 
-    /*
-     * Muted autoplay.
-     */
-    try {
-      player.mute();
-    } catch {}
-
     const commandId =
       beginRemoteCommand();
 
-    try {
-      player.seekTo(
-        targetTime,
-        true
-      );
-    } catch {}
-
     /*
-     * Play only because server
-     * says PLAYING.
+     * Muted autoplay (participant
+     * stays muted; unmuted only via
+     * YouTube's own volume button).
      */
-    try {
-      player.playVideo();
-    } catch {}
+    safePlay(
+      player,
+      targetTime,
+      false
+    );
 
     lastKnownTimeRef.current =
       targetTime;
@@ -670,16 +703,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
           /*
            * Host / Moderator.
            */
-          try {
-            p.seekTo(
-              latestTime,
-              true
-            );
-          } catch {}
-
-          try {
-            p.playVideo();
-          } catch {}
+          safePlay(
+            p,
+            latestTime,
+            true
+          );
 
           lastKnownTimeRef.current =
             latestTime;
@@ -737,16 +765,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       const commandId =
         beginRemoteCommand();
 
-      try {
-        player.seekTo(
-          targetTime,
-          true
-        );
-      } catch {}
-
-      try {
-        player.playVideo();
-      } catch {}
+      safePlay(
+        player,
+        targetTime,
+        true
+      );
 
       lastKnownTimeRef.current =
         targetTime;
@@ -843,16 +866,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
         const commandId =
           beginRemoteCommand();
 
-        try {
-          player.seekTo(
-            target,
-            true
-          );
-        } catch {}
-
-        try {
-          player.playVideo();
-        } catch {}
+        safePlay(
+          player,
+          target,
+          canControlRef.current
+        );
 
         lastKnownTimeRef.current =
           target;
