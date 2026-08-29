@@ -145,7 +145,7 @@ export default function Home() {
           </div>
 
           <span>
-            Watch<span>Party</span>
+            yt-<span>sync</span>
           </span>
 
         </div>
