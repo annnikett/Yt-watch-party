@@ -3,6 +3,7 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 
 const YouTubePlayer = forwardRef(function YouTubePlayer(
@@ -19,6 +20,29 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   const playerRef = useRef(null);
 
   const readyRef = useRef(false);
+
+  /*
+   * Participants (like the Host) get
+   * auto-unmuted right after each video
+   * actually starts playing -- see
+   * safePlay() below. This tracks whether
+   * THEY have chosen to mute themselves
+   * with the small button, so that
+   * preference survives video changes.
+   * Default: sound ON.
+   */
+  const [
+    participantMuted,
+    setParticipantMuted,
+  ] = useState(false);
+
+  const participantMutedRef =
+    useRef(false);
+
+  useEffect(() => {
+    participantMutedRef.current =
+      participantMuted;
+  }, [participantMuted]);
 
   // ==================================================
   // IMPORTANT: LATEST PROPS
@@ -317,7 +341,8 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     safePlay(
       player,
       targetTime,
-      canControlRef.current
+      canControlRef.current ||
+        !participantMutedRef.current
     );
 
     lastKnownTimeRef.current =
@@ -422,8 +447,9 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
    * blocked), then unmute right after playback has
    * begun. Unmuting AFTER playback already started is
    * not treated as "autoplay with sound" by browsers, so
-   * it works reliably. Participants stay muted (existing
-   * design) unless they use YouTube's own volume button.
+   * it works reliably -- for BOTH Host/Moderator and
+   * Participants. Whether to unmute is decided by the
+   * caller (unmuteAfter), not by role.
    */
   const safePlay = (
     player,
@@ -448,11 +474,7 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     if (unmuteAfter) {
       setTimeout(() => {
         try {
-          if (
-            canControlRef.current
-          ) {
-            playerRef.current?.unMute();
-          }
+          playerRef.current?.unMute();
         } catch {}
       }, 300);
     }
@@ -476,14 +498,14 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       beginRemoteCommand();
 
     /*
-     * Muted autoplay (participant
-     * stays muted; unmuted only via
-     * YouTube's own volume button).
+     * Starts muted (autoplay-safe), then
+     * auto-unmutes -- unless the participant
+     * has chosen to mute themselves.
      */
     safePlay(
       player,
       targetTime,
-      false
+      !participantMutedRef.current
     );
 
     lastKnownTimeRef.current =
@@ -674,20 +696,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
           if (
             !canControlRef.current
           ) {
-            try {
-              p.mute();
-            } catch {}
-
-            try {
-              p.seekTo(
-                latestTime,
-                true
-              );
-            } catch {}
-
-            try {
-              p.playVideo();
-            } catch {}
+            safePlay(
+              p,
+              latestTime,
+              !participantMutedRef.current
+            );
 
             lastKnownTimeRef.current =
               latestTime;
@@ -1448,6 +1461,32 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   }, [canControl]);
 
   // ==================================================
+  // PARTICIPANT MUTE TOGGLE
+  // ==================================================
+
+  const toggleParticipantMute = () => {
+    const player =
+      playerRef.current;
+
+    if (!player) {
+      return;
+    }
+
+    const next =
+      !participantMuted;
+
+    try {
+      if (next) {
+        player.mute();
+      } else {
+        player.unMute();
+      }
+    } catch {}
+
+    setParticipantMuted(next);
+  };
+
+  // ==================================================
   // UI
   // ==================================================
 
@@ -1470,10 +1509,17 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       />
 
       {/*
-       * Participant cannot interact.
+       * Participant cannot interact
+       * with play/pause/seek.
+       *
+       * Sound auto-unmutes on join
+       * (see safePlay); this button
+       * is just a manual override so
+       * they can mute/unmute anytime.
        *
        * Host / Moderator:
-       * overlay removed.
+       * overlay removed (full native
+       * controls, including volume).
        */}
       {!canControl && (
         <div
@@ -1484,7 +1530,34 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
             background:
               "transparent",
           }}
-        />
+        >
+          <button
+            type="button"
+            onClick={
+              toggleParticipantMute
+            }
+            style={{
+              position:
+                "absolute",
+              bottom: 12,
+              right: 12,
+              zIndex: 11,
+              background:
+                "rgba(0,0,0,0.65)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding:
+                "6px 12px",
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            {participantMuted
+              ? "🔇 Unmute"
+              : "🔊 Mute"}
+          </button>
+        </div>
       )}
     </div>
   );
