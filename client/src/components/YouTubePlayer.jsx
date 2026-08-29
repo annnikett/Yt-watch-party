@@ -18,6 +18,7 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
 ) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   const readyRef = useRef(false);
 
@@ -43,6 +44,41 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     participantMutedRef.current =
       participantMuted;
   }, [participantMuted]);
+
+  /*
+   * Our overlay blocks clicks straight
+   * through to YouTube's own fullscreen
+   * button too (same reason as mute), so
+   * Participants get their own button
+   * that fullscreens the whole player
+   * wrapper (video + overlay together).
+   */
+  const [
+    isFullscreen,
+    setIsFullscreen,
+  ] = useState(false);
+
+  useEffect(() => {
+    const handleChange = () => {
+      setIsFullscreen(
+        Boolean(
+          document.fullscreenElement
+        )
+      );
+    };
+
+    document.addEventListener(
+      "fullscreenchange",
+      handleChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        "fullscreenchange",
+        handleChange
+      );
+    };
+  }, []);
 
   // ==================================================
   // IMPORTANT: LATEST PROPS
@@ -1487,16 +1523,41 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   };
 
   // ==================================================
+  // FULLSCREEN TOGGLE
+  // ==================================================
+
+  const toggleFullscreen = () => {
+    const el =
+      wrapperRef.current;
+
+    if (!el) {
+      return;
+    }
+
+    try {
+      if (
+        document.fullscreenElement
+      ) {
+        document.exitFullscreen?.();
+      } else {
+        el.requestFullscreen?.();
+      }
+    } catch {}
+  };
+
+  // ==================================================
   // UI
   // ==================================================
 
   return (
     <div
+      ref={wrapperRef}
       className="yt-player-wrapper"
       style={{
         position: "relative",
         width: "100%",
         height: "100%",
+        background: "#000",
       }}
     >
       <div
@@ -1513,13 +1574,18 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
        * with play/pause/seek.
        *
        * Sound auto-unmutes on join
-       * (see safePlay); this button
-       * is just a manual override so
-       * they can mute/unmute anytime.
+       * (see safePlay); the mute
+       * button is just a manual
+       * override. Fullscreen button
+       * is needed too, since the
+       * overlay also blocks clicks
+       * to YouTube's own fullscreen
+       * control.
        *
        * Host / Moderator:
        * overlay removed (full native
-       * controls, including volume).
+       * controls, including volume
+       * and fullscreen).
        */}
       {!canControl && (
         <div
@@ -1531,32 +1597,61 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
               "transparent",
           }}
         >
-          <button
-            type="button"
-            onClick={
-              toggleParticipantMute
-            }
+          <div
             style={{
               position:
                 "absolute",
               bottom: 12,
               right: 12,
               zIndex: 11,
-              background:
-                "rgba(0,0,0,0.65)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding:
-                "6px 12px",
-              fontSize: 13,
-              cursor: "pointer",
+              display: "flex",
+              gap: 8,
             }}
           >
-            {participantMuted
-              ? "🔇 Unmute"
-              : "🔊 Mute"}
-          </button>
+            <button
+              type="button"
+              onClick={
+                toggleParticipantMute
+              }
+              style={{
+                background:
+                  "rgba(0,0,0,0.65)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                padding:
+                  "6px 12px",
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              {participantMuted
+                ? "🔇 Unmute"
+                : "🔊 Mute"}
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                toggleFullscreen
+              }
+              style={{
+                background:
+                  "rgba(0,0,0,0.65)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                padding:
+                  "6px 12px",
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              {isFullscreen
+                ? "⤡ Exit"
+                : "⤢ Full"}
+            </button>
+          </div>
         </div>
       )}
     </div>
