@@ -6,6 +6,25 @@ import {
   useState,
 } from "react";
 
+function formatTime(seconds) {
+  const total = Math.max(
+    0,
+    Math.floor(
+      Number(seconds) || 0
+    )
+  );
+
+  const mins = Math.floor(
+    total / 60
+  );
+
+  const secs = total % 60;
+
+  return `${mins}:${String(
+    secs
+  ).padStart(2, "0")}`;
+}
+
 const YouTubePlayer = forwardRef(function YouTubePlayer(
   {
     videoId,
@@ -73,6 +92,28 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     hostPlaying,
     setHostPlaying,
   ] = useState(false);
+
+  /*
+   * Custom control bar state (Host/
+   * Moderator only -- native controls
+   * are off, see playerVars.controls
+   * above).
+   */
+  const [
+    hostMuted,
+    setHostMuted,
+  ] = useState(false);
+
+  const [
+    progress,
+    setProgress,
+  ] = useState({
+    current: 0,
+    duration: 0,
+  });
+
+  const seekBarRef =
+    useRef(null);
 
   useEffect(() => {
     const handleChange = () => {
@@ -317,6 +358,16 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
         ) {
           return;
         }
+
+        /*
+         * Drive the custom seek bar.
+         */
+        setProgress({
+          current,
+          duration:
+            player.getDuration?.() ||
+            0,
+        });
 
         const previous =
           lastKnownTimeRef.current;
@@ -653,6 +704,22 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
         "playing"
     );
 
+    /*
+     * Seed the custom seek bar right
+     * away from server state; the
+     * polling loop keeps it live while
+     * playing.
+     */
+    setProgress(
+      (prev) => ({
+        current: Number(
+          state.currentTime
+        ) || 0,
+        duration:
+          prev.duration,
+      })
+    );
+
     const player =
       playerRef.current;
 
@@ -758,6 +825,21 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
         if (!p) {
           return;
         }
+
+        /*
+         * Duration is only known once
+         * the new video's metadata has
+         * loaded -- refresh the seek bar.
+         */
+        setProgress(
+          (prev) => ({
+            current:
+              prev.current,
+            duration:
+              p.getDuration?.() ||
+              0,
+          })
+        );
 
         /*
          * VERY IMPORTANT:
@@ -1394,9 +1476,17 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       const options = {
         playerVars: {
           /*
-           * Always enabled.
+           * Native YouTube controls are
+           * OFF -- we render our own full
+           * control bar below (Play/Pause,
+           * Mute, Seek, Fullscreen). This
+           * avoids any dependence on the
+           * iframe's own clickable UI,
+           * which some browser extensions
+           * (ad blockers etc) can silently
+           * break.
            */
-          controls: 1,
+          controls: 0,
 
           /*
            * Never autoplay before server state
@@ -1685,6 +1775,91 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   };
 
   // ==================================================
+  // HOST MUTE TOGGLE
+  // ==================================================
+
+  const toggleHostMute = () => {
+    const player =
+      playerRef.current;
+
+    if (!player) {
+      return;
+    }
+
+    const next =
+      !hostMuted;
+
+    try {
+      if (next) {
+        player.mute();
+      } else {
+        player.unMute();
+      }
+    } catch {}
+
+    setHostMuted(next);
+  };
+
+  // ==================================================
+  // HOST SEEK BAR
+  // ==================================================
+
+  const handleSeekBarClick = (
+    event
+  ) => {
+    const player =
+      playerRef.current;
+
+    const bar =
+      seekBarRef.current;
+
+    if (
+      !player ||
+      !bar ||
+      !progress.duration
+    ) {
+      return;
+    }
+
+    const rect =
+      bar.getBoundingClientRect();
+
+    const ratio =
+      Math.min(
+        1,
+        Math.max(
+          0,
+          (event.clientX -
+            rect.left) /
+            rect.width
+        )
+      );
+
+    const target =
+      ratio *
+      progress.duration;
+
+    setProgress(
+      (prev) => ({
+        current: target,
+        duration:
+          prev.duration,
+      })
+    );
+
+    /*
+     * Goes through the same
+     * onSeekRef -> socket -> server
+     * -> sync_state round-trip a
+     * detected native seek would
+     * have used.
+     */
+    onSeekRef.current?.(
+      target
+    );
+  };
+
+  // ==================================================
   // FULLSCREEN TOGGLE
   // ==================================================
 
@@ -1804,22 +1979,30 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
        * and fullscreen).
        */}
       {/*
-       * Host / Moderator: our own
-       * Play/Pause button, independent
-       * of whatever YouTube's native
-       * control bar is doing. Small,
-       * corner-only -- doesn't block
-       * clicks anywhere else on the
-       * iframe (volume, fullscreen,
-       * seek bar all stay native).
+       * Host / Moderator: full custom
+       * control bar. Native YouTube
+       * controls are OFF (playerVars
+       * .controls = 0), so this is the
+       * ONLY way to control playback --
+       * guaranteed to work regardless
+       * of browser extensions messing
+       * with the iframe's own UI.
        */}
       {canControl && (
         <div
           style={{
             position: "absolute",
-            bottom: 12,
-            left: 12,
+            left: 0,
+            right: 0,
+            bottom: 0,
             zIndex: 11,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding:
+              "8px 12px",
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))",
           }}
         >
           <button
@@ -1834,14 +2017,119 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
               border: "none",
               borderRadius: 6,
               padding:
-                "6px 14px",
+                "6px 12px",
               fontSize: 13,
               cursor: "pointer",
+              flexShrink: 0,
             }}
           >
             {hostPlaying
-              ? "⏸ Pause"
-              : "▶ Play"}
+              ? "⏸"
+              : "▶"}
+          </button>
+
+          <div
+            ref={seekBarRef}
+            onClick={
+              handleSeekBarClick
+            }
+            style={{
+              flex: 1,
+              height: 6,
+              borderRadius: 999,
+              background:
+                "rgba(255,255,255,0.25)",
+              cursor: "pointer",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                position:
+                  "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                borderRadius: 999,
+                background:
+                  "#fff",
+                width: `${
+                  progress.duration
+                    ? Math.min(
+                        100,
+                        (progress.current /
+                          progress.duration) *
+                          100
+                      )
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+
+          <span
+            style={{
+              color: "#fff",
+              fontSize: 12,
+              flexShrink: 0,
+              minWidth: 80,
+              textAlign:
+                "center",
+            }}
+          >
+            {formatTime(
+              progress.current
+            )}{" "}
+            /{" "}
+            {formatTime(
+              progress.duration
+            )}
+          </span>
+
+          <button
+            type="button"
+            onClick={
+              toggleHostMute
+            }
+            style={{
+              background:
+                "rgba(0,0,0,0.65)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding:
+                "6px 12px",
+              fontSize: 13,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            {hostMuted
+              ? "🔇"
+              : "🔊"}
+          </button>
+
+          <button
+            type="button"
+            onClick={
+              toggleFullscreen
+            }
+            style={{
+              background:
+                "rgba(0,0,0,0.65)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding:
+                "6px 12px",
+              fontSize: 13,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            {isFullscreen
+              ? "⤡"
+              : "⤢"}
           </button>
         </div>
       )}
