@@ -80,6 +80,61 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     };
   }, []);
 
+  /*
+   * Shows a loading indicator while the
+   * YouTube iframe's own content is still
+   * fetching (slow network etc), instead
+   * of a confusing plain black box.
+   */
+  const [
+    videoLoading,
+    setVideoLoading,
+  ] = useState(false);
+
+  const loadedVideoIdRef =
+    useRef("");
+
+  const videoLoadingTimeoutRef =
+    useRef(null);
+
+  const beginVideoLoading = () => {
+    setVideoLoading(true);
+
+    if (
+      videoLoadingTimeoutRef.current
+    ) {
+      clearTimeout(
+        videoLoadingTimeoutRef.current
+      );
+    }
+
+    /*
+     * Safety net: if the iframe never
+     * fires a single state event (e.g.
+     * embedding disabled for this
+     * video), don't spin forever.
+     */
+    videoLoadingTimeoutRef.current =
+      setTimeout(() => {
+        setVideoLoading(false);
+      }, 8000);
+  };
+
+  const clearVideoLoading = () => {
+    if (
+      videoLoadingTimeoutRef.current
+    ) {
+      clearTimeout(
+        videoLoadingTimeoutRef.current
+      );
+
+      videoLoadingTimeoutRef.current =
+        null;
+    }
+
+    setVideoLoading(false);
+  };
+
   // ==================================================
   // IMPORTANT: LATEST PROPS
   // ==================================================
@@ -638,6 +693,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
           targetTime,
       });
 
+      loadedVideoIdRef.current =
+        state.videoId;
+
+      beginVideoLoading();
+
       lastKnownTimeRef.current =
         targetTime;
 
@@ -1063,6 +1123,11 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
             target,
         });
 
+        loadedVideoIdRef.current =
+          id;
+
+        beginVideoLoading();
+
         lastKnownTimeRef.current =
           target;
 
@@ -1108,6 +1173,14 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     ) {
       return;
     }
+
+    /*
+     * Any real state event means the
+     * iframe's content has actually
+     * loaded and is responding -- clear
+     * the loading indicator.
+     */
+    clearVideoLoading();
 
     // ==================================================
     // PLAYING
@@ -1436,6 +1509,17 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       readyRef.current =
         false;
 
+      if (
+        videoLoadingTimeoutRef.current
+      ) {
+        clearTimeout(
+          videoLoadingTimeoutRef.current
+        );
+
+        videoLoadingTimeoutRef.current =
+          null;
+      }
+
       try {
         playerRef.current?.destroy?.();
       } catch {}
@@ -1568,6 +1652,60 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
           height: "100%",
         }}
       />
+
+      {/*
+       * Shown while the YouTube iframe's
+       * own content is still fetching
+       * (slow network) -- so a loading
+       * video doesn't look "stuck".
+       */}
+      {videoLoading && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 9,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent:
+              "center",
+            gap: 10,
+            background:
+              "rgba(0,0,0,0.55)",
+            color: "#fff",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              border:
+                "3px solid rgba(255,255,255,0.25)",
+              borderTopColor:
+                "#fff",
+              borderRadius: "50%",
+              animation:
+                "yt-spin 0.8s linear infinite",
+            }}
+          />
+
+          <span
+            style={{
+              fontSize: 13,
+              opacity: 0.85,
+            }}
+          >
+            Video load ho raha
+            hai…
+          </span>
+
+          <style>
+            {`@keyframes yt-spin { to { transform: rotate(360deg); } }`}
+          </style>
+        </div>
+      )}
 
       {/*
        * Participant cannot interact
