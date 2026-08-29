@@ -58,6 +58,22 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     setIsFullscreen,
   ] = useState(false);
 
+  /*
+   * Some browser extensions (ad blockers
+   * etc) can silently disable clicks on
+   * YouTube's OWN control bar inside the
+   * iframe. Rather than depend on that,
+   * Host/Moderator get their own guaranteed
+   * Play/Pause button that goes through the
+   * exact same server round-trip a real
+   * click on the native controls would have
+   * triggered (onPlay / onPause props).
+   */
+  const [
+    hostPlaying,
+    setHostPlaying,
+  ] = useState(false);
+
   useEffect(() => {
     const handleChange = () => {
       setIsFullscreen(
@@ -625,6 +641,18 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     pendingStateRef.current =
       state;
 
+    /*
+     * Drives our own Play/Pause button
+     * (see hostPlaying state below) --
+     * server is the source of truth for
+     * this, independent of whatever the
+     * YouTube iframe's native UI is doing.
+     */
+    setHostPlaying(
+      state.playState ===
+        "playing"
+    );
+
     const player =
       playerRef.current;
 
@@ -674,16 +702,26 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
       );
 
       /*
-       * Participant must be muted
-       * before loading.
+       * ALWAYS mute before loading, for
+       * EVERYONE (Host/Moderator too).
+       *
+       * loadVideoById() auto-plays the
+       * video, but by the time this runs
+       * we're several ticks removed from
+       * any user click (socket round-trip
+       * in between) -- browsers silently
+       * block unmuted autoplay in that
+       * case, which is exactly what made
+       * the video look "stuck" for the
+       * Host. Muting first guarantees the
+       * load/autoplay always succeeds;
+       * safePlay() below already handles
+       * unmuting again once real playback
+       * has genuinely started.
        */
-      if (
-        !canControlRef.current
-      ) {
-        try {
-          player.mute();
-        } catch {}
-      }
+      try {
+        player.mute();
+      } catch {}
 
       player.loadVideoById({
         videoId:
@@ -1109,13 +1147,15 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
             startSeconds
           ) || 0;
 
-        if (
-          !canControlRef.current
-        ) {
-          try {
-            player.mute();
-          } catch {}
-        }
+        /*
+         * ALWAYS mute before loading (see
+         * matching comment in applyState) --
+         * avoids the blocked-autoplay "stuck
+         * video" for Host/Moderator too.
+         */
+        try {
+          player.mute();
+        } catch {}
 
         player.loadVideoById({
           videoId: id,
@@ -1607,6 +1647,44 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   };
 
   // ==================================================
+  // HOST PLAY/PAUSE TOGGLE
+  // ==================================================
+
+  /*
+   * Bypasses YouTube's own iframe UI
+   * entirely. Uses the exact same path
+   * a real native-controls click would:
+   * onPlay/onPause -> socket -> server
+   * -> sync_state -> safePlay(), which
+   * already handles the mute-then-unmute
+   * autoplay workaround correctly.
+   */
+  const toggleHostPlayback = () => {
+    const player =
+      playerRef.current;
+
+    if (!player) {
+      return;
+    }
+
+    const time =
+      player.getCurrentTime?.() ??
+      pendingStateRef.current
+        ?.currentTime ??
+      0;
+
+    if (hostPlaying) {
+      onPauseRef.current?.(
+        time
+      );
+    } else {
+      onPlayRef.current?.(
+        time
+      );
+    }
+  };
+
+  // ==================================================
   // FULLSCREEN TOGGLE
   // ==================================================
 
@@ -1725,6 +1803,49 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
        * controls, including volume
        * and fullscreen).
        */}
+      {/*
+       * Host / Moderator: our own
+       * Play/Pause button, independent
+       * of whatever YouTube's native
+       * control bar is doing. Small,
+       * corner-only -- doesn't block
+       * clicks anywhere else on the
+       * iframe (volume, fullscreen,
+       * seek bar all stay native).
+       */}
+      {canControl && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: 12,
+            zIndex: 11,
+          }}
+        >
+          <button
+            type="button"
+            onClick={
+              toggleHostPlayback
+            }
+            style={{
+              background:
+                "rgba(0,0,0,0.65)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding:
+                "6px 14px",
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            {hostPlaying
+              ? "⏸ Pause"
+              : "▶ Play"}
+          </button>
+        </div>
+      )}
+
       {!canControl && (
         <div
           style={{
